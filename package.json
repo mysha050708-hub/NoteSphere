@@ -1,0 +1,19 @@
+{
+  "name": "notesphere",
+  "version": "1.0.0",
+  "description": "Collaborative and personal notes application with user authentication",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test-api.js"
+  },
+  "keywords": ["notes", "collaboration", "auth", "express"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

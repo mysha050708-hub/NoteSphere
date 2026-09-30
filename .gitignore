@@ -1,0 +1,6 @@
+node_modules/
+data/notes-db.json
+.env
+.env.*
+!.env.example
+npm-debug.log*
