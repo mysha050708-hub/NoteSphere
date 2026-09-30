@@ -1,0 +1,152 @@
+/* Custom CSS enhancements for NoteSphere */
+
+:root {
+  --bg-primary: #f8fafc;
+  --bg-card: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+}
+
+.dark {
+  --bg-primary: #0b1120;
+  --bg-card: #1e293b;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-color: #334155;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Glassmorphism effects */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.dark .glass {
+  background: rgba(30, 41, 59, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Note Card Themes */
+.card-color-default {
+  border-top: 4px solid #94a3b8;
+}
+.card-color-blue {
+  border-top: 4px solid #3b82f6;
+}
+.card-color-emerald {
+  border-top: 4px solid #10b981;
+}
+.card-color-amber {
+  border-top: 4px solid #f59e0b;
+}
+.card-color-purple {
+  border-top: 4px solid #a855f7;
+}
+.card-color-rose {
+  border-top: 4px solid #f43f5e;
+}
+
+/* Note card hover animation */
+.note-card {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.note-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.12);
+}
+.dark .note-card:hover {
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.45);
+}
+
+/* Line clamp for previews */
+.line-clamp-4 {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+.dark ::webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+/* Toast animations */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes fadeOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.toast-enter {
+  animation: slideInRight 0.3s forwards cubic-bezier(0.16, 1, 0.3, 1);
+}
+.toast-exit {
+  animation: fadeOutRight 0.3s forwards cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Checkbox and toggle styles */
+.custom-checkbox:checked {
+  background-color: #4f46e5;
+  border-color: #4f46e5;
+}
+
+/* Modal fade animations */
+.modal-backdrop {
+  transition: opacity 0.2s ease;
+}
+.modal-content {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* Markdown typography styles for view modal */
+#viewContent h1 { font-size: 1.5rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.5rem; }
+#viewContent h2 { font-size: 1.25rem; font-weight: 700; margin-top: 0.85rem; margin-bottom: 0.4rem; }
+#viewContent h3 { font-size: 1.1rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.35rem; }
+#viewContent p { margin-bottom: 0.75rem; }
+#viewContent ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.75rem; }
+#viewContent ol { list-style-type: decimal; padding-left: 1.25rem; margin-bottom: 0.75rem; }
+#viewContent li { margin-bottom: 0.25rem; }
+#viewContent blockquote { border-left: 3px solid #6366f1; padding-left: 0.75rem; color: #64748b; font-style: italic; margin-bottom: 0.75rem; }
+.dark #viewContent blockquote { color: #94a3b8; border-color: #818cf8; }
+#viewContent code { background: rgba(0, 0, 0, 0.06); padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.85em; }
+.dark #viewContent code { background: rgba(255, 255, 255, 0.1); }
+#viewContent pre { background: #1e293b; color: #f8fafc; padding: 0.75rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 0.75rem; }
+#viewContent hr { border: 0; border-top: 1px solid #e2e8f0; margin: 1rem 0; }
+.dark #viewContent hr { border-top-color: #334155; }
+
