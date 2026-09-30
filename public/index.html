@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NoteSphere — Collaborative & Personal Notes</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Marked.js Markdown Parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col antialiased">
+
+  <!-- ================= NAVBAR ================= -->
+  <header class="sticky top-0 z-30 glass border-b border-slate-200 dark:border-slate-800 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="app.resetFilters()">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+          </svg>
+        </div>
+        <div>
+          <span class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">NoteSphere</span>
+          <span class="hidden sm:inline-block text-xs font-semibold uppercase tracking-wider ml-2 px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">Shared & Private</span>
+        </div>
+      </div>
+
+      <!-- Right Nav Items -->
+      <div class="flex items-center gap-3">
+        <!-- Dark Mode Toggle Button -->
+        <button id="themeToggleBtn" onclick="app.toggleTheme()" class="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Toggle theme">
+          <!-- Sun Icon (shown in dark mode) -->
+          <svg id="themeIconSun" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <!-- Moon Icon (shown in light mode) -->
+          <svg id="themeIconMoon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+
+        <!-- User Profile Dropdown / Logged in Info -->
+        <div id="userNavSection" class="hidden items-center gap-3 pl-2 border-l border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-2">
+            <div id="userAvatarBadge" class="w-9 h-9 rounded-full bg-indigo-600 text-white font-semibold text-sm flex items-center justify-center shadow-sm">
+              U
+            </div>
+            <div class="hidden md:block text-left text-sm leading-tight">
+              <div id="userNameDisplay" class="font-semibold text-slate-900 dark:text-slate-100">User Name</div>
+              <div id="userUsernameDisplay" class="text-xs text-slate-500 dark:text-slate-400">@username</div>
+            </div>
+          </div>
+
+          <!-- Logout Button -->
+          <button onclick="app.logout()" class="text-xs font-medium text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 px-3 py-2 rounded-lg transition flex items-center gap-1.5" title="Sign out">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span class="hidden sm:inline">Logout</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= AUTH VIEW (Logged out) ================= -->
+  <main id="authView" class="flex-1 flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700/60 overflow-hidden">
+      
+      <!-- Auth Header -->
+      <div class="bg-gradient-to-r from-indigo-600 to-violet-600 p-6 text-white text-center">
+        <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold">Welcome to NoteSphere</h2>
+        <p class="text-indigo-100 text-sm mt-1">Shared board accessible to all members + private personal notes</p>
+      </div>
+
+      <!-- Auth Tabs -->
+      <div class="flex border-b border-slate-200 dark:border-slate-700 text-sm font-medium">
+        <button id="tabLogin" onclick="app.switchAuthTab('login')" class="flex-1 py-3 text-center border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 font-semibold">
+          Sign In
+        </button>
+        <button id="tabRegister" onclick="app.switchAuthTab('register')" class="flex-1 py-3 text-center border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+          Create Account
+        </button>
+      </div>
+
+      <div class="p-6">
+        <!-- Error Message Banner -->
+        <div id="authError" class="hidden mb-4 p-3 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-sm"></div>
+
+        <!-- LOGIN FORM -->
+        <form id="loginForm" onsubmit="app.handleLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Username</label>
+            <input type="text" id="loginUsername" required autocomplete="username" placeholder="e.g. alice" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Password</label>
+            <input type="password" id="loginPassword" required autocomplete="current-password" placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition text-sm">
+          </div>
+          <button type="submit" id="loginSubmitBtn" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md shadow-indigo-600/30 transition flex items-center justify-center gap-2">
+            <span>Sign In</span>
+          </button>
+        </form>
+
+        <!-- REGISTER FORM -->
+        <form id="registerForm" onsubmit="app.handleRegister(event)" class="space-y-4 hidden">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Full Name</label>
+            <input type="text" id="regName" required placeholder="e.g. Sarah Connor" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Username</label>
+            <input type="text" id="regUsername" required placeholder="Choose a username" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Password</label>
+            <input type="password" id="regPassword" required minlength="6" placeholder="Min 6 characters" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">Avatar Color Accent</label>
+            <div class="flex items-center gap-3">
+              <label class="cursor-pointer">
+                <input type="radio" name="regAvatarColor" value="indigo" checked class="peer sr-only">
+                <div class="w-8 h-8 rounded-full bg-indigo-600 ring-2 ring-transparent peer-checked:ring-offset-2 peer-checked:ring-indigo-600 transition"></div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="regAvatarColor" value="emerald" class="peer sr-only">
+                <div class="w-8 h-8 rounded-full bg-emerald-600 ring-2 ring-transparent peer-checked:ring-offset-2 peer-checked:ring-emerald-600 transition"></div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="regAvatarColor" value="blue" class="peer sr-only">
+                <div class="w-8 h-8 rounded-full bg-blue-600 ring-2 ring-transparent peer-checked:ring-offset-2 peer-checked:ring-blue-600 transition"></div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="regAvatarColor" value="amber" class="peer sr-only">
+                <div class="w-8 h-8 rounded-full bg-amber-500 ring-2 ring-transparent peer-checked:ring-offset-2 peer-checked:ring-amber-500 transition"></div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="regAvatarColor" value="purple" class="peer sr-only">
+                <div class="w-8 h-8 rounded-full bg-purple-600 ring-2 ring-transparent peer-checked:ring-offset-2 peer-checked:ring-purple-600 transition"></div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="regAvatarColor" value="rose" class="peer sr-only">
+                <div class="w-8 h-8 rounded-full bg-rose-600 ring-2 ring-transparent peer-checked:ring-offset-2 peer-checked:ring-rose-600 transition"></div>
+              </label>
+            </div>
+          </div>
+          <button type="submit" id="regSubmitBtn" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md shadow-indigo-600/30 transition flex items-center justify-center gap-2">
+            <span>Register & Start Writing</span>
+          </button>
+        </form>
+
+        <!-- Quick Demo Accounts Box -->
+        <div class="mt-6 pt-5 border-t border-slate-200 dark:border-slate-700">
+          <p class="text-xs text-slate-500 dark:text-slate-400 font-medium text-center mb-2.5">
+            ⚡ Quick-login with pre-seeded demo accounts:
+          </p>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="app.quickLogin('alice', 'password123')" class="px-3 py-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-slate-700 dark:hover:bg-slate-600 text-indigo-700 dark:text-indigo-300 text-xs font-medium transition border border-indigo-200/50 dark:border-slate-600 flex items-center justify-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+              Alice (password123)
+            </button>
+            <button onclick="app.quickLogin('bob', 'password123')" class="px-3 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-slate-700 dark:hover:bg-slate-600 text-emerald-700 dark:text-emerald-300 text-xs font-medium transition border border-emerald-200/50 dark:border-slate-600 flex items-center justify-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+              Bob (password123)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ================= MAIN APP VIEW (Logged In) ================= -->
+  <main id="appView" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    
+    <!-- Top Stats & Action Bar -->
+    <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-6">
+      
+      <!-- Stats Badges -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium shadow-sm">
+          <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+          <span>Total Accessible: <strong id="statTotalCount" class="text-slate-900 dark:text-white">0</strong></span>
+        </div>
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium shadow-sm">
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+          <span>Shared Board: <strong id="statSharedCount" class="text-slate-900 dark:text-white">0</strong></span>
+        </div>
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium shadow-sm">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+          <span>My Private: <strong id="statPrivateCount" class="text-slate-900 dark:text-white">0</strong></span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2">
+        <!-- Export Button -->
+        <button onclick="app.exportNotesJSON()" class="px-3 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-sm transition flex items-center gap-1.5" title="Export all accessible notes as JSON">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span class="hidden sm:inline">Export JSON</span>
+        </button>
+
+        <!-- New Note Button -->
+        <button onclick="app.openCreateModal()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-md shadow-indigo-600/30 transition flex items-center gap-2 group">
+          <svg class="w-4 h-4 transition-transform group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>New Note</span>
+          <span class="hidden lg:inline text-indigo-200 text-xs font-normal ml-1">Ctrl+N</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter & Search Controls Bar -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700/60 shadow-sm mb-6 space-y-4">
+      
+      <!-- Top row: Scope Tabs + Live Search -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        
+        <!-- View Scope Tabs -->
+        <div class="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400">
+          <button id="scopeAll" onclick="app.setScope('all')" class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 font-semibold shadow-sm transition">
+            All Visible
+          </button>
+          <button id="scopeShared" onclick="app.setScope('shared')" class="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Shared Board
+          </button>
+          <button id="scopePrivate" onclick="app.setScope('private')" class="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            My Private Only
+          </button>
+          <button id="scopeMine" onclick="app.setScope('mine')" class="px-3 py-1.5 rounded-lg hover:text-slate-900 dark:hover:text-white transition">
+            Created By Me
+          </button>
+        </div>
+
+        <!-- Search Input -->
+        <div class="relative flex-1 max-w-md">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input type="text" id="searchInput" oninput="app.handleSearch(this.value)" placeholder="Search notes by title, content, or author..." class="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+          <button id="searchClearBtn" onclick="app.clearSearch()" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom row: Category Chips + Author Filter + Sort Dropdown -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-750 text-xs">
+        
+        <!-- Category Chips -->
+        <div class="flex flex-wrap items-center gap-1.5" id="categoryChipsContainer">
+          <span class="text-slate-400 uppercase tracking-wider font-semibold mr-1">Category:</span>
+          <button onclick="app.setCategory('All')" class="category-chip active px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold border border-indigo-200 dark:border-indigo-800 transition">All</button>
+          <button onclick="app.setCategory('General')" class="category-chip px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition">General</button>
+          <button onclick="app.setCategory('Work')" class="category-chip px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition">Work</button>
+          <button onclick="app.setCategory('Ideas')" class="category-chip px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition">Ideas</button>
+          <button onclick="app.setCategory('Personal')" class="category-chip px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition">Personal</button>
+          <button onclick="app.setCategory('Tasks')" class="category-chip px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition">Tasks</button>
+          <button onclick="app.setCategory('Study')" class="category-chip px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition">Study</button>
+        </div>
+
+        <!-- Author Filter & Sort Selectors -->
+        <div class="flex items-center gap-2">
+          <!-- Author Dropdown -->
+          <div class="flex items-center gap-1.5">
+            <label class="text-slate-400 font-semibold uppercase tracking-wider">Author:</label>
+            <select id="authorSelectFilter" onchange="app.setAuthorFilter(this.value)" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+              <option value="All">Everyone</option>
+            </select>
+          </div>
+
+          <!-- Sort Dropdown -->
+          <div class="flex items-center gap-1.5">
+            <label class="text-slate-400 font-semibold uppercase tracking-wider">Sort:</label>
+            <select id="sortSelect" onchange="app.setSort(this.value)" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+              <option value="pinned-newest">Pinned & Newest</option>
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="title">Alphabetical (A-Z)</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Notes Grid Container -->
+    <div id="notesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- Notes cards will be dynamically rendered here -->
+    </div>
+
+    <!-- Empty State Message -->
+    <div id="emptyState" class="hidden text-center py-16 px-4 bg-white dark:bg-slate-800/60 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 mt-2">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-500">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      </div>
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">No notes match your filters</h3>
+      <p class="text-slate-500 dark:text-slate-400 text-sm max-w-sm mx-auto mb-5">
+        Try resetting your search query or create a new note on the shared board.
+      </p>
+      <button onclick="app.openCreateModal()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-md shadow-indigo-600/20 transition inline-flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>Create First Note</span>
+      </button>
+    </div>
+
+  </main>
+
+  <!-- ================= CREATE / EDIT NOTE MODAL ================= -->
+  <div id="noteModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="app.closeNoteModal()"></div>
+
+    <!-- Modal Dialog -->
+    <div class="flex min-h-full items-center justify-center p-4">
+      <div class="relative w-full max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden transform transition-all">
+        
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+          <h3 id="noteModalTitle" class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            Create New Note
+          </h3>
+          <button onclick="app.closeNoteModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Modal Form -->
+        <form id="noteForm" onsubmit="app.handleNoteSubmit(event)" class="p-6 space-y-4">
+          <input type="hidden" id="noteEditId" value="">
+
+          <!-- Note Title -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Title</label>
+            <input type="text" id="noteTitle" required placeholder="Note title..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-base transition">
+          </div>
+
+          <!-- Category, Accent Color, and Pin -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+            
+            <!-- Category -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Category</label>
+              <select id="noteCategory" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="General">General</option>
+                <option value="Work">Work</option>
+                <option value="Ideas">Ideas</option>
+                <option value="Personal">Personal</option>
+                <option value="Tasks">Tasks</option>
+                <option value="Study">Study</option>
+              </select>
+            </div>
+
+            <!-- Color Accent -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Card Accent</label>
+              <div class="flex items-center gap-2 pt-1">
+                <label class="cursor-pointer" title="Default">
+                  <input type="radio" name="noteColor" value="default" checked class="peer sr-only">
+                  <div class="w-6 h-6 rounded-full bg-slate-400 ring-2 ring-transparent peer-checked:ring-offset-2 peer-checked:ring-slate-400 transition"></div>
+                </label>
+                <label class="cursor-pointer" title="Blue">
+                  <input type="radio" name="noteColor" value="blue" class="peer sr-only">
+                  <div class="w-6 h-6 rounded-full bg-blue-500 ring-2 ring-transparent peer-checked:ring-offset-2 peer-checked:ring-blue-500 transition"></div>
+                </label>
+                <label class="cursor-pointer" title="Emerald">
+                  <input type="radio" name="noteColor" value="emerald" class="peer sr-only">
+                  <div class="w-6 h-6 rounded-full bg-emerald-500 ring-2 ring-transparent peer-checked:ring-offset-2 peer-checked:ring-emerald-500 transition"></div>
+                </label>
+                <label class="cursor-pointer" title="Amber">
+                  <input type="radio" name="noteColor" value="amber" class="peer sr-only">
+                  <div class="w-6 h-6 rounded-full bg-amber-500 ring-2 ring-transparent peer-checked:ring-offset-2 peer-checked:ring-amber-500 transition"></div>
+                </label>
+                <label class="cursor-pointer" title="Purple">
+                  <input type="radio" name="noteColor" value="purple" class="peer sr-only">
+                  <div class="w-6 h-6 rounded-full bg-purple-500 ring-2 ring-transparent peer-checked:ring-offset-2 peer-checked:ring-purple-500 transition"></div>
+                </label>
+                <label class="cursor-pointer" title="Rose">
+                  <input type="radio" name="noteColor" value="rose" class="peer sr-only">
+                  <div class="w-6 h-6 rounded-full bg-rose-500 ring-2 ring-transparent peer-checked:ring-offset-2 peer-checked:ring-rose-500 transition"></div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Pin To Top Checkbox -->
+            <div class="pt-4 sm:pt-0">
+              <label class="inline-flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="noteIsPinned" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-600 dark:bg-slate-900">
+                <span class="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  📌 Pin to top
+                </span>
+              </label>
+            </div>
+
+          </div>
+
+          <!-- Accessibility / Visibility Choice (CRUCIAL REQUIREMENT) -->
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-2">
+            <span class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Visibility & Access</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              
+              <!-- Shared Option -->
+              <label class="flex items-start gap-3 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition has-[:checked]:border-indigo-600 has-[:checked]:bg-indigo-50/50 dark:has-[:checked]:bg-indigo-950/30">
+                <input type="radio" name="noteVisibility" id="visShared" value="true" checked class="mt-0.5 text-indigo-600 focus:ring-indigo-500">
+                <div>
+                  <div class="text-xs font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
+                    <span class="text-blue-500">🌐</span> Shared Board
+                  </div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Accessible to anyone who logs in.
+                  </div>
+                </div>
+              </label>
+
+              <!-- Private Option -->
+              <label class="flex items-start gap-3 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/50 dark:has-[:checked]:bg-amber-950/30">
+                <input type="radio" name="noteVisibility" id="visPrivate" value="false" class="mt-0.5 text-amber-600 focus:ring-amber-500">
+                <div>
+                  <div class="text-xs font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
+                    <span class="text-amber-500">🔒</span> Private Note
+                  </div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Only accessible and visible to you.
+                  </div>
+                </div>
+              </label>
+
+            </div>
+          </div>
+
+          <!-- Note Content Area with Markdown Helper Bar -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Content</label>
+              <!-- Formatting toolbar -->
+              <div class="flex items-center gap-1 text-xs">
+                <button type="button" onclick="app.insertMarkdown('**', '**')" class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-200" title="Bold">B</button>
+                <button type="button" onclick="app.insertMarkdown('*', '*')" class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 italic hover:bg-slate-200" title="Italic">I</button>
+                <button type="button" onclick="app.insertMarkdown('- ')" class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200" title="List">• List</button>
+                <button type="button" onclick="app.insertMarkdown('- [ ] ')" class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200" title="Checklist">☑ Todo</button>
+                <button type="button" onclick="app.insertMarkdown('`', '`')" class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono hover:bg-slate-200" title="Code">&lt;&gt;</button>
+              </div>
+            </div>
+            <textarea id="noteContent" oninput="app.updateTextCounts()" rows="7" placeholder="Write your thoughts, checklist, meeting notes or ideas..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm leading-relaxed transition"></textarea>
+            <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+              <span>Supports Markdown (lists, **bold**, *italic*, `code`)</span>
+              <span id="textCountDisplay">0 words • 0 chars</span>
+            </div>
+          </div>
+
+          <!-- Modal Action Buttons -->
+          <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+            <button type="button" onclick="app.closeNoteModal()" class="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 text-sm font-semibold transition">
+              Cancel
+            </button>
+            <button type="submit" id="saveNoteBtn" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-md shadow-indigo-600/30 transition">
+              Save Note
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= VIEW NOTE FULL DETAIL MODAL ================= -->
+  <div id="viewModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="app.closeViewModal()"></div>
+    <div class="flex min-h-full items-center justify-center p-4">
+      <div class="relative w-full max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden transform transition-all">
+        
+        <div class="p-6">
+          <!-- Top Badges & Close -->
+          <div class="flex items-start justify-between gap-4 mb-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <span id="viewVisibilityBadge"></span>
+              <span id="viewCategoryBadge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"></span>
+              <span id="viewPinnedBadge" class="hidden text-xs font-semibold text-amber-600 dark:text-amber-400">📌 Pinned</span>
+            </div>
+            <button onclick="app.closeViewModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Note Title -->
+          <h2 id="viewTitle" class="text-2xl font-bold text-slate-900 dark:text-white mb-2"></h2>
+
+          <!-- Author Info & Timestamp -->
+          <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 pb-4 border-b border-slate-200 dark:border-slate-700 mb-4">
+            <div id="viewAuthorAvatar" class="w-6 h-6 rounded-full text-white text-[10px] font-bold flex items-center justify-center"></div>
+            <span id="viewAuthorName" class="font-medium text-slate-700 dark:text-slate-300"></span>
+            <span>•</span>
+            <span id="viewDate"></span>
+          </div>
+
+          <!-- Content Body -->
+          <div id="viewContent" class="text-slate-800 dark:text-slate-200 text-sm leading-relaxed whitespace-pre-wrap font-sans min-h-[120px] max-h-[50vh] overflow-y-auto pr-2"></div>
+
+          <!-- Shared note reactions and discussion -->
+          <section class="mt-6 pt-5 border-t border-slate-200 dark:border-slate-700">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-3">Reactions</h3>
+            <div id="viewReactions" class="flex flex-wrap gap-2" aria-label="React to this note"></div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white mt-5 mb-3">Comments <span id="viewCommentCount" class="font-normal text-slate-500"></span></h3>
+            <div id="viewComments" class="space-y-3 max-h-56 overflow-y-auto mb-4"></div>
+            <form id="commentForm" onsubmit="app.handleCommentSubmit(event)" class="flex items-start gap-2">
+              <label for="commentInput" class="sr-only">Write a comment</label>
+              <textarea id="commentInput" maxlength="2000" rows="2" placeholder="Add a comment…" required class="flex-1 resize-y px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+              <button id="commentSubmitBtn" type="submit" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold">Post</button>
+            </form>
+          </section>
+
+          <!-- Footer Actions -->
+          <div class="flex items-center justify-between pt-5 border-t border-slate-200 dark:border-slate-700 mt-6 text-xs">
+            <div class="flex items-center gap-2">
+              <button onclick="app.copyViewNoteContent()" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 font-semibold transition flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                </svg>
+                <span>Copy Text</span>
+              </button>
+              <button onclick="app.downloadViewNoteMarkdown()" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 font-semibold transition flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>Download .md</span>
+              </button>
+            </div>
+
+            <div id="viewAuthorActions" class="hidden items-center gap-2">
+              <button onclick="app.editFromViewModal()" class="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold transition hover:bg-indigo-100">
+                Edit Note
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= DELETE CONFIRMATION MODAL ================= -->
+  <div id="deleteModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="app.closeDeleteModal()"></div>
+    <div class="flex min-h-full items-center justify-center p-4">
+      <div class="relative w-full max-w-sm bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 text-center">
+        <div class="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 mx-auto mb-4 flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </div>
+        <h4 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Delete this note?</h4>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">
+          This action cannot be undone. Are you sure you want to permanently delete this note?
+        </p>
+        <div class="flex items-center justify-center gap-3">
+          <button onclick="app.closeDeleteModal()" class="flex-1 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-semibold text-sm transition">
+            Cancel
+          </button>
+          <button id="confirmDeleteBtn" onclick="app.confirmDelete()" class="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm shadow-md shadow-rose-600/30 transition">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FLOATING TOAST CONTAINER ================= -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm pointer-events-none"></div>
+
+  <!-- Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
